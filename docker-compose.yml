@@ -1,0 +1,40 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    deploy:
+      resources:
+        limits:
+          memory: 3G  
+
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfile-Camera
+    container_name: flask-app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    devices:
+      - "/dev/video0:/dev/video0"
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
+    
+  websocket-server:
+    build:
+      context: .
+      dockerfile: Dockerfile-RGB
+    container_name: websocket-server
+    ports:
+      - "8765:8765"
+    privileged: true
