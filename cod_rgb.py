@@ -1,81 +1,72 @@
 import asyncio
-import RPi.GPIO as GPIO
-import websockets
 import json
+import websockets
+from rpi_ws281x import PixelStrip, Color
 
-LED1_PINS = {'red': 17, 'green': 27, 'blue': 22}
-LED2_PINS = {'red': 23, 'green': 24, 'blue': 25}
-LED3_PINS = {'red': 5, 'green': 6, 'blue': 16}
-GPIO.setmode(GPIO.BCM)
-leds = []
-for pins in [LED1_PINS, LED2_PINS, LED3_PINS]:
-    GPIO.setup(pins['red'], GPIO.OUT)
-    GPIO.setup(pins['green'], GPIO.OUT)
-    GPIO.setup(pins['blue'], GPIO.OUT)
+# Configuration for the LED strip
+LED_COUNT = 30  # Number of LEDs in the strip
+LED_PIN = 18    # GPIO pin connected to the data line of the strip
+LED_BRIGHTNESS = 255  # Maximum brightness
+LED_FREQ_HZ = 800000  # LED signal frequency (usually 800kHz)
+LED_DMA = 10    # DMA channel to use for generating the signal
+LED_INVERT = False  # True to invert the signal
 
-    leds.append({
-        'red': GPIO.PWM(pins['red'], 1000),  
-        'green': GPIO.PWM(pins['green'], 1000),
-        'blue': GPIO.PWM(pins['blue'], 1000)
-    })
-
-for led in leds:
-    led['red'].start(0)
-    led['green'].start(0)
-    led['blue'].start(0)
+# Create an instance of PixelStrip
+strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+strip.begin()
 
 def set_color(r, g, b):
-    """Set the color of all RGB LEDs.
-    
+    """Set the color of all addressable LEDs.
+
     Args:
         r (int): Red value (0-255)
         g (int): Green value (0-255)
         b (int): Blue value (0-255)
     """
-    for led in leds:
-        led['red'].ChangeDutyCycle(r / 255 * 100)
-        led['green'].ChangeDutyCycle(g / 255 * 100)
-        led['blue'].ChangeDutyCycle(b / 255 * 100)
+    color = Color(r, g, b)
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, color)
+    strip.show()
 
 def turn_off_leds():
-    """Turn off all RGB LEDs."""
+    """Turn off all addressable LEDs."""
     set_color(0, 0, 0)
 
 def validate_color_data(data):
     """Validate that the JSON data contains the correct keys and values.
-    
+
     Args:
         data (dict): The parsed JSON data.
-    
+
     Returns:
         tuple: (bool, str) where the first value indicates if the data is valid,
                and the second is an error message or an empty string.
     """
     required_keys = {"red", "green", "blue"}
-    
+
     # Check if all required keys are present
     if not required_keys.issubset(data.keys()):
         missing = required_keys - data.keys()
         return False, f"Missing keys: {', '.join(missing)}"
-    
+
     # Check for any extra keys
     allowed_keys = required_keys | {"duration"}  # Allow duration as an optional key
     if not data.keys() <= allowed_keys:
         extra_keys = data.keys() - allowed_keys
         return False, f"Extra keys present: {', '.join(extra_keys)}"
-    
+
     # Check if all values are within the acceptable range (0-255)
     for key in required_keys:
         value = data.get(key)
         if not isinstance(value, int) or not (0 <= value <= 255):
             return False, f"Invalid value for {key}: {value} (must be an integer between 0 and 255)"
-    
+
     # Validate the optional duration value if it exists
     if "duration" in data:
         duration = data["duration"]
         if not isinstance(duration, (int, float)) or duration <= 0:
             return False, f"Invalid duration value: {duration} (must be a positive number)"
-    
+
     return True, ""
 
 async def handler(websocket, path):
@@ -91,15 +82,15 @@ async def handler(websocket, path):
                 response = json.dumps({"status": "Error", "message": error_message})
                 await websocket.send(response)
                 continue
-            
+
             r = data["red"]
             g = data["green"]
             b = data["blue"]
             duration = data.get("duration", None)  # Get duration if provided, otherwise None
-            
+
             # Set the color of the LEDs
             set_color(r, g, b)
-            
+
             # Send an acknowledgment back to the client
             response = json.dumps({"status": "OK"})
             await websocket.send(response)
@@ -126,8 +117,5 @@ try:
 except KeyboardInterrupt:
     pass
 finally:
-    for led in leds:
-        led['red'].stop()
-        led['green'].stop()
-        led['blue'].stop()
-    GPIO.cleanup()
+    # Cleanup code if needed (in this case, we don't need extra cleanup for the strip)
+    pass
