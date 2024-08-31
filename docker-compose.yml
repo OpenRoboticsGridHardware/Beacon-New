@@ -1,3 +1,4 @@
+
 services:
   redis:
     image: redis:latest
@@ -11,6 +12,7 @@ services:
       resources:
         limits:
           memory: 3G  
+    restart: unless-stopped
 
   flask-app:
     build:
@@ -29,6 +31,7 @@ services:
     cap_add:
       - SYS_ADMIN
     privileged: true
+    restart: unless-stopped
     
   websocket-server:
     build:
@@ -38,3 +41,4 @@ services:
     ports:
       - "8765:8765"
     privileged: true
+    restart: unless-stopped
