@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 class CamStream:
-    def __init__(self, cam_addr_list, image_size=(1280,720), fps=30, use_cache=False):
+    def __init__(self, cam_addr_list, image_size=(640,480), fps=30, use_cache=False):
         self._cams = [cv2.VideoCapture(addr) for addr in cam_addr_list]
         self.fps = fps
         self._image_size = image_size
@@ -128,7 +128,7 @@ def video_feed():
 def test_cam_stream():
     global cs
     addr = [0]  # Change camera address to your specific camera device
-    cs = CamStream(addr, (1280, 720), use_cache=True, fps=30)
+    cs = CamStream(addr, (640, 480), use_cache=True, fps=30)
     cs.start_cache()
     app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)  # Optimize Flask server
 
