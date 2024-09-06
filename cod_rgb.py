@@ -3,15 +3,14 @@ import json
 import websockets
 from rpi_ws281x import PixelStrip, Color
 
-# Configuration for the LED strip
-LED_COUNT = 30  # Number of LEDs in the strip
-LED_PIN = 18    # GPIO pin connected to the data line of the strip
-LED_BRIGHTNESS = 255  # Maximum brightness
-LED_FREQ_HZ = 800000  # LED signal frequency (usually 800kHz)
-LED_DMA = 10    # DMA channel to use for generating the signal
-LED_INVERT = False  # True to invert the signal
 
-# Create an instance of PixelStrip
+LED_COUNT = 30  
+LED_PIN = 18    
+LED_BRIGHTNESS = 255  
+LED_FREQ_HZ = 800000  
+LED_DMA = 10    
+LED_INVERT = False  
+
 strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
 strip.begin()
 
