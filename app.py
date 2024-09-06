@@ -151,7 +151,13 @@ def test_cam_stream():
     addr = [0]  # Change camera address to your specific camera device
     cs = CamStream(addr, (640, 480), use_cache=True, fps=30)
     cs.start_cache()
-    app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)  # Optimize Flask server
+
+    # SSL certificates for HTTPS
+    cert_file = 'cert.pem'
+    key_file = 'key.pem'
+
+    # Run Flask app with SSL support
+    app.run(host='0.0.0.0', port=5000, ssl_context=(cert_file, key_file), threaded=True, use_reloader=False)
 
 if __name__ == "__main__":
     test_cam_stream()
